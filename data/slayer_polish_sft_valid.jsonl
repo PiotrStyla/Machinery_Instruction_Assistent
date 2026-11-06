@@ -1,0 +1,12 @@
+{"instruction":"Wyjaśnij, czym jest recykling, w dwóch zdaniach.","response":"Recykling polega na ponownym przetwarzaniu zużytych materiałów, aby wykorzystać je do wytworzenia nowych produktów. Ogranicza zużycie surowców i ilość odpadów."}
+{"instruction":"Podaj różnicę między hipotezą a wnioskiem.","response":"Hipoteza jest przypuszczeniem poddawanym sprawdzeniu. Wniosek jest interpretacją wyników uzyskanych po przeprowadzeniu badania."}
+{"instruction":"Napisz krótką definicję bezpieczeństwa informacji.","response":"Bezpieczeństwo informacji to ochrona danych przed nieuprawnionym dostępem, zmianą, utratą lub ujawnieniem."}
+{"instruction":"Odpowiedz w trzech punktach, jak przygotować prosty eksperyment.","response":"1. Określ pytanie i hipotezę.\n2. Zaplanuj procedurę oraz pomiary.\n3. Zapisz wyniki i wyciągnij wnioski."}
+{"instruction":"Wyjaśnij, dlaczego model może podać pewnie brzmiącą nieprawdę.","response":"Model językowy przewiduje prawdopodobne ciągi tokenów, a nie sprawdza automatycznie prawdziwości każdej tezy. Może więc wygenerować płynną, lecz błędną odpowiedź."}
+{"instruction":"Popraw zdanie: Dane zostały zapisane wczoraj i są dostępny.","response":"Dane zostały zapisane wczoraj i są dostępne."}
+{"instruction":"Podaj przykład pytania, na które potrzebne są aktualne dane.","response":"Przykładem jest pytanie: „Jaka jest dzisiejsza cena paliwa w konkretnym mieście?”"}
+{"instruction":"Wyjaśnij, czym jest walidacyjny zbiór danych.","response":"Walidacyjny zbiór danych służy do oceniania modelu podczas opracowywania treningu, ale nie powinien być używany do aktualizacji jego parametrów."}
+{"instruction":"Napisz jedno zdanie o polskiej gospodarce bez podawania niezweryfikowanych liczb.","response":"Rozwój polskiej gospodarki zależy między innymi od produktywności, inwestycji, popytu i stabilności instytucji."}
+{"instruction":"Wymień dwa objawy zapętlenia generowania tekstu.","response":"Objawami zapętlenia są wielokrotne powtarzanie tego samego zdania oraz generowanie tych samych słów bez rozwijania treści."}
+{"instruction":"Wyjaśnij, czym jest instrukcja systemowa.","response":"Instrukcja systemowa określa nadrzędne zasady działania modelu, jego rolę i ograniczenia. Powinna być rozdzielona od właściwego pytania użytkownika."}
+{"instruction":"Napisz krótką, rzeczową odpowiedź na pytanie: Czy wynik modelu trzeba sprawdzać?","response":"Tak. Wynik modelu trzeba sprawdzać, szczególnie gdy dotyczy faktów, zdrowia, prawa, pieniędzy lub bezpieczeństwa."}

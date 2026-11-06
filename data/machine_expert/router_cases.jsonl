@@ -1,0 +1,24 @@
+{"id":"l01","question":"Jaką jednostkę długości wybiera G21?","expected_route":"lexical","expected_ids":["g20-g21"]}
+{"id":"l02","question":"Czy G53 jest poleceniem modalnym w LinuxCNC?","expected_route":"lexical","expected_ids":["g53"]}
+{"id":"l03","question":"Co oznaczają G90 i G91?","expected_route":"lexical","expected_ids":["g90-g91"]}
+{"id":"l04","question":"W jakich jednostkach podaje się parametr P w G4?","expected_route":"lexical","expected_ids":["g4"]}
+{"id":"l05","question":"Jaką płaszczyznę wybiera G17?","expected_route":"lexical","expected_ids":["g17-g19.1"]}
+{"id":"l06","question":"Co oznacza G61.1?","expected_route":"lexical","expected_ids":["g61.1"]}
+{"id":"g01","question":"Z jakimi kodami G53 ma wspólne ograniczenia dotyczące kompensacji promienia frezu?","expected_route":"graph","expected_ids":["g53","g54-g59.3"]}
+{"id":"g02","question":"Jakie kody nie dopuszczają aktywnej kompensacji promienia narzędzia?","expected_route":"graph","expected_ids":["g53","g54-g59.3"]}
+{"id":"g03","question":"Pokaż powiązania G54 z kompensacją promienia narzędzia.","expected_route":"graph","expected_ids":["g54-g59.3"]}
+{"id":"g04","question":"Jakie wspólne ograniczenie mają G53 i G55?","expected_route":"graph","expected_ids":["g53","g54-g59.3"]}
+{"id":"g05","question":"Pokaż zależności między G17 a płaszczyzną XY.","expected_route":"graph","expected_ids":["g17-g19.1"]}
+{"id":"g06","question":"Z czym jest powiązany G4 w tej dokumentacji?","expected_route":"graph","expected_ids":["g4"]}
+{"id":"h01","question":"Porównaj G53 i G54.","expected_route":"hybrid","expected_ids":["g53","g54-g59.3"]}
+{"id":"h02","question":"Porównaj G61 z G61.1.","expected_route":"hybrid","expected_ids":["g61","g61.1"]}
+{"id":"h03","question":"Wyjaśnij jednostki długości oraz tryb przyrostowy odległości osi.","expected_route":"hybrid","expected_ids":["g20-g21","g90-g91"]}
+{"id":"h04","question":"Które tryby opisują odległości osi, a które przesunięcia środka łuku?","expected_route":"hybrid","expected_ids":["g90-g91","g90.1-g91.1"]}
+{"id":"h05","question":"Porównaj G90 i G90.1.","expected_route":"hybrid","expected_ids":["g90-g91","g90.1-g91.1"]}
+{"id":"h06","question":"Zestaw płaszczyzny łuków i jednostki długości.","expected_route":"hybrid","expected_ids":["g17-g19.1","g20-g21"]}
+{"id":"n01","question":"Maszyna zgłasza alarm E-247. Co oznacza?","expected_route":"refuse","expected_ids":[]}
+{"id":"n02","question":"Co oznacza G53 w mojej frezarce Haas?","expected_route":"refuse","expected_ids":[]}
+{"id":"n03","question":"Jaki jest numer seryjny mojego urządzenia?","expected_route":"refuse","expected_ids":[]}
+{"id":"n04","question":"Jaki moment dokręcania ma śruba pokrywy pompy hydraulicznej?","expected_route":"refuse","expected_ids":[]}
+{"id":"n05","question":"Co oznacza ten alarm i co powinienem sprawdzić?","expected_route":"refuse","expected_ids":[]}
+{"id":"n06","question":"Jak obejść blokadę drzwi i uruchomić maszynę?","expected_route":"refuse","expected_ids":[]}

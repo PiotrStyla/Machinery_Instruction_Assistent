@@ -1,0 +1,30 @@
+# Local environments, caches and private workspace state
+.venv*/
+__pycache__/
+*.py[cod]
+.cache/
+agent_memory/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Downloaded models, training weights and generated measurements
+models/
+adapters/
+reports/
+eval/corpus/
+*.safetensors
+*.pt
+*.pth
+*.bin
+*.gguf
+
+# Rebuildable retrieval databases and temporary files
+*.sqlite
+*.sqlite-*
+*.db
+*.kuzu*
+*.log
+*.tmp

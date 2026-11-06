@@ -1,0 +1,22 @@
+# Slayer1B inference
+
+1. ✅ **Research** — Confirmed Slayer1B-1.05 and 1.06 architecture, weights, tokenizer, and loaders.
+2. ✅ **Runtime** — Implemented a PyTorch runtime with low-memory loading and an architecture-preserving KV cache.
+3. ✅ **Benchmark** — Cached decoding matches reference logits for both releases; CPU generation and memory measurements completed.
+4. ✅ **Memory path** — BF16/FP16 loading is implemented; INT8/INT4 is intentionally left out until a quality baseline is defined.
+
+Current direction: SLAYER Machine Expert, offline documentation retrieval without further SFT. Slayer1B-1.05 and 1.06 remain experimental answer-generation candidates.
+9. ✅ **Evaluation** — Fixed 32-prompt Polish continuation suite and 2048-token external Polish proxy perplexity measurement completed for both releases.
+10. **Next** — Use `scripts/machine_router.py` for routed evidence lookup. Rules remain the default after the local classifier comparison; validate on independently authored, broader documentation before making general routing claims. Generated advice remains unverified and is disabled in this entry point.
+
+11. ✅ **SFT data** — 48 Polish instruction/response records for training and 12 held-out records for validation; JSONL schema validated with the Slayer tokenizer.
+12. ✅ **SFT full** — 48-step LoRA run completed in two resumable 24-step phases; output: `adapters/slayer1b-1.05-polish-sft-full.pt`.
+13. ✅ **SFT validation** — Final adapter loaded successfully; 12/12 held-out greedy outputs matched the base model, with 3 dash-only outputs and 8 marker-loop outputs unchanged.
+14. ✅ **Training measurements** — SFT now writes append-only JSONL events for run start, every step, epoch, validation, and run end, including loss, learning rate, gradient norm, elapsed time, and RSS memory.
+15. ✅ **Inference speed experiment** — Added `--max-context-tokens` and CPU dynamic INT8 benchmarking. BF16 remains preferred: 8.86 tok/s and ~2.18 GB RSS on the short prompt versus INT8 5.55 tok/s and ~6.53 GB RSS; a 301-token prompt dropped from 29.23 s to 6.20 s prefill when capped at 64 tokens.
+
+16. **Machine Expert** — Completed a pinned LinuxCNC 2.9.4 excerpt corpus, local SQLite FTS5 search, 30-question Polish retrieval benchmark, and oracle/retrieved grounding smoke on both releases. Search found 24/24 supported sections and rejected 6/6 out-of-scope queries on the development set; both models contradicted the supplied G53 modality evidence. Commands, source/license attribution and limitations: `specs/machine_expert.md`.
+
+17. **Graphiti experiment** — Installed real Graphiti 0.31.2 with local Kuzu and E5 embeddings in `.venv-graphiti`. Persisted 56 entities / 42 source-backed curated relations. Compared identical 30 questions plus four relationship diagnostics: original-set top-3 section hits were 24/24 baseline versus 23/24 Graphiti; native Graphiti did not abstain on six unknown queries. Two-hop traversal linked G53 and G54–G59.3 through a shared constraint. Separate automatic Qwen extraction probe and setup/backend caveats: `specs/graphiti_experiment.md`.
+
+18. **Decision routing** — Added lexical/Graphiti/hybrid/refusal selection, independent provenance and source-topic coverage checks, actual optional local Laya classification and 24 development cases. Rules selected 24/24 expected routes; raw Laya 7/24, or 12/24 with hard guards. All 18 source-bearing rule-routed cases found their expected sections; five refused and one requested clarification. Real CLI scenarios and 26/26 tests passed. Reports and commands: `specs/machine_expert.md#decision-routing-and-evidence-gate`.

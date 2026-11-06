@@ -1,0 +1,29 @@
+{
+  "project": "LinuxCNC",
+  "version": "2.9.4",
+  "revision": "b8ccac8f835c0610233fdf799255c63f2b9738ac",
+  "license": "GFDL-1.1-or-later; no invariant sections or cover texts",
+  "fetched_at": "2026-11-06T20:11:02.002976+00:00",
+  "files": [
+    {
+      "path": "original/gcode/g-code.adoc",
+      "url": "https://raw.githubusercontent.com/LinuxCNC/linuxcnc/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc",
+      "sha256": "8752ec38586668b7fea5dd80c35c6409928126062bb799d1674cfa2b9014e144",
+      "bytes": 94876
+    },
+    {
+      "path": "original/common/overleaf.adoc",
+      "url": "https://raw.githubusercontent.com/LinuxCNC/linuxcnc/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/common/overleaf.adoc",
+      "sha256": "fd608b5e334ab7b88352423c5d829ff3651831ee6c35aef329e0c30eac8b2faf",
+      "bytes": 1371
+    },
+    {
+      "path": "original/common/gpld-copyright.adoc",
+      "url": "https://raw.githubusercontent.com/LinuxCNC/linuxcnc/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/common/gpld-copyright.adoc",
+      "sha256": "32930d1e343029dd540788d7421040d9fe5328a1fb5c2e50a99927970684a001",
+      "bytes": 18540
+    }
+  ],
+  "corpus_sha256": "608e3050478e3e91a8135df796b0db5e7ab9876a9c19220eb2f1e68b3471f26e",
+  "extraction": "Untranslated complete selected G-code sections with original line numbers; no images or include expansion. Modified compilation by Slayer Machine Expert; originals and license retained."
+}

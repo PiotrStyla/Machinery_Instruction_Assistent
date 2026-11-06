@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+# Preserve the exact bytes recorded in the provenance manifest.
+data/machine_expert/chunks.jsonl -text
+data/machine_expert/original/** -text
