@@ -1,0 +1,87 @@
+{
+  "question": "Czy G53 jest modalny?",
+  "policy": "rules",
+  "rule_decision": {
+    "route": "lexical",
+    "reason": "scoped_lookup",
+    "required_sections": [
+      "g53"
+    ],
+    "codes": [
+      "G53"
+    ],
+    "graph_anchors": [
+      "G53"
+    ],
+    "hard_block": false,
+    "action": "retrieve"
+  },
+  "decision": {
+    "route": "lexical",
+    "reason": "scoped_lookup",
+    "required_sections": [
+      "g53"
+    ],
+    "codes": [
+      "G53"
+    ],
+    "graph_anchors": [
+      "G53"
+    ],
+    "hard_block": false,
+    "action": "retrieve"
+  },
+  "classifier_proposal": null,
+  "executed_backends": [
+    "lexical"
+  ],
+  "lexical_subqueries": [
+    "Czy G53 jest modalny?",
+    "G53"
+  ],
+  "backend_errors": [],
+  "evidence": {
+    "status": "target_coverage_complete",
+    "required_sections": [
+      "g53"
+    ],
+    "missing_sections": [],
+    "covered_sections": [
+      "g53"
+    ],
+    "rejected": [],
+    "relations": [],
+    "sources": [
+      {
+        "id": "g53",
+        "title": "LinuxCNC 2.9.4 G-Codes",
+        "section": "G53 Move in Machine Coordinates",
+        "text": "[[gcode:g53]]\n== G53 Move in Machine Coordinates(((G53 Machine Coordinates)))\n\n[source,{ngc}]\n----\nG53 axes\n----\n\nTo move in the <<sec:machine-coordinate-system,machine coordinate system>>,\nprogram 'G53' on the same line as a linear move. 'G53' is not modal and\nmust be programmed on each line. 'G0' or 'G1' does not have to be\nprogrammed on the same line if one is currently active.\n\nFor example 'G53 G0 X0 Y0 Z0' will move the axes to the home position\neven if the currently selected coordinate system has offsets in effect.\n\n.G53 Example\n[source,{ngc}]\n----\nG53 G0 X0 Y0 Z0 (rapid linear move to the machine origin)\nG53 X2 (rapid linear move to absolute coordinate X2)\n----\n\nSee <<gcode:g0,G0>> section for more information.\n\nIt is an error if:\n\n* G53 is used without G0 or G1 being active,\n* or G53 is used while cutter compensation is on.",
+        "revision": "b8ccac8f835c0610233fdf799255c63f2b9738ac",
+        "source_path": "docs/src/gcode/g-code.adoc",
+        "line_start": 1540,
+        "line_end": 1568,
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1540-L1568",
+        "score": 1.0
+      }
+    ],
+    "generation_allowed": false,
+    "scope": "Coverage of explicitly identified source topics only; not semantic entailment or machine compatibility.",
+    "answer_policy": "source_excerpts_only"
+  },
+  "notice": "Informacja dokumentacyjna, nie instrukcja uruchomienia lub naprawy maszyny. Wymagane zatwierdzone procedury i wykwalifikowany personel.",
+  "message": "Dodano eksperymentalną, niezweryfikowaną odpowiedź Slayera. Nie jest to zatwierdzona porada techniczna.",
+  "elapsed_seconds": 0.008,
+  "experimental_answer": {
+    "status": "generated_unverified",
+    "answer": " Nie. [g53]",
+    "input_tokens": 380,
+    "generated_tokens": 6,
+    "elapsed_seconds": 31.944,
+    "source_entailment": "not_automatically_verified",
+    "precision": "BF16 hidden states/backbone; frozen FP32 head and last-two-block linears; FP32 LoRA",
+    "notice": "Eksperymentalna odpowiedź Slayera, niezatwierdzona instrukcja naprawy lub uruchomienia maszyny.",
+    "model_dir": "models/Slayer1B-1.05",
+    "adapter": "adapters/machine_expert/1.05/epoch-003.pt"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "release": "1.06",
+  "split": "valid",
+  "phase": "baseline",
+  "global_step": 0,
+  "examples": 9,
+  "mean_loss": 2.51958962281545,
+  "exact_match_rate": 0.0,
+  "citation_rate": 0.0,
+  "median_generation_seconds": 36.785,
+  "elapsed_seconds": 679.174,
+  "model_dir": "models/Slayer1B-1.06",
+  "adapter": null,
+  "cases_sha256": "55ee7f650474de569783e790494cb4d7085d2709cbedd103122654648a6c9d24",
+  "source_corpus_sha256": "608e3050478e3e91a8135df796b0db5e7ab9876a9c19220eb2f1e68b3471f26e",
+  "evidence_mode": "oracle_complete_source_sections",
+  "quality_warning": "Exact full-answer match and citation IDs are not a semantic truth or safety verifier."
+}

@@ -5,7 +5,7 @@ import argparse
 from tokenizers import Tokenizer
 
 from slayer_runtime import DTYPES, generate, load_int8_model, load_model
-from sft_slayer import apply_adapter
+from sft_slayer import apply_adapter, format_sft_prompt
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
     if args.adapter:
         apply_adapter(model, args.adapter)
     tokenizer = Tokenizer.from_file(f"{args.model_dir}/tokenizer.json")
-    prompt = f"Użytkownik: {args.prompt}\nAsystent:" if args.adapter else args.prompt
+    prompt = format_sft_prompt(args.prompt) if args.adapter else args.prompt
     generated = generate(
         model,
         tokenizer,

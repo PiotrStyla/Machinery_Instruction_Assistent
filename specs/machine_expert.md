@@ -2,7 +2,7 @@
 
 ## Scope and decision
 
-The original baseline experiment searches selected LinuxCNC 2.9.4 G-code sections. It does not diagnose a real machine, execute G-code, provide a repair procedure, interpret images, or claim coverage of a complete CNC manual. A separate real Graphiti/Kuzu comparison is now available; see [Graphiti experiment](graphiti_experiment.md). No further SFT was used.
+The original baseline experiment searches selected LinuxCNC 2.9.4 G-code sections. It does not diagnose a real machine, execute G-code, provide a repair procedure, interpret images, or claim coverage of a complete CNC manual. A separate real Graphiti/Kuzu comparison is available; see [Graphiti experiment](graphiti_experiment.md). Those retrieval experiments used no further SFT. The subsequent controlled dual-release training and opt-in unverified generation are described separately in [grounded SFT](grounded_sft.md).
 
 - Source language: original English. Questions and reference answers: Polish, hand-authored for this project.
 - Retrieval: SQLite FTS5/BM25 plus an explicit Polish-English domain glossary and exact code filtering. No embeddings, translation API, model, GPU or network is needed for search.
@@ -92,7 +92,7 @@ Routing uses documentation code families and a small explicit domain vocabulary.
 
 The evidence gate checks the corpus SHA256 and revision, exact retrieved source content and citation metadata, required-section coverage, and graph quote/source provenance. Backend failure stays visible as `backend_incomplete`; it is not hidden by silently changing routes. Missing sections produce `partial_evidence`, and inconsistent provenance produces `source_integrity_failed`.
 
-**`target_coverage_complete` means only that all explicitly identified source topics were found.** It does not prove semantic entailment, complete warning coverage, applicability to a physical machine, or the truth of a generated answer. Every result has `generation_allowed: false` and returns source excerpts only. The previously observed Slayer G53 contradiction is not repaired by this router.
+**`target_coverage_complete` means only that all explicitly identified source topics were found.** It does not prove semantic entailment, complete warning coverage, applicability to a physical machine, or the truth of a generated answer. The gate retains `generation_allowed: false` and approves source excerpts only. An explicit `ask --model-dir ...` may now add an independently labelled `experimental_answer`; it does not override this lack of validated technical approval. The router itself does not repair the previously observed G53 contradiction; new training outcomes are measured separately.
 
 Run from the project root:
 

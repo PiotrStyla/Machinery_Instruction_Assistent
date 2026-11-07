@@ -309,6 +309,11 @@ async def main():
     ask.add_argument("--question",required=True)
     ask.add_argument("--policy",choices=("rules","laya"),default="rules")
     ask.add_argument("--output")
+    ask.add_argument("--model-dir", help="opt in to an experimental, unverified Slayer answer")
+    ask.add_argument("--adapter")
+    ask.add_argument("--max-input-tokens", type=int, default=1024)
+    ask.add_argument("--max-new-tokens", type=int, default=64)
+    ask.add_argument("--threads", type=int, default=4)
     bench=sub.add_parser("benchmark")
     bench.add_argument("--cases",default="data/machine_expert/router_cases.jsonl")
     bench.add_argument("--classifier",choices=("none","laya"),default="none")
@@ -316,12 +321,31 @@ async def main():
     bench.add_argument("--execute",action="store_true")
     bench.add_argument("--output",default="reports/machine_expert_router.json")
     args=parser.parse_args()
+    if args.command == "ask":
+        if args.adapter and not args.model_dir:
+            parser.error("--adapter requires --model-dir")
+        if min(args.max_input_tokens, args.max_new_tokens, args.threads) < 1:
+            parser.error("token budgets and threads must be positive")
     router=EvidenceRouter(args.corpus,args.lexical_db,args.graph_db)
     try:
         if args.command=="benchmark":
             await benchmark(args,router)
         else:
             report=await router.ask(args.question,args.policy)
+            if args.model_dir:
+                if report["evidence"]["status"] != "target_coverage_complete":
+                    report["experimental_answer"] = {"status": "not_generated", "reason": report["evidence"]["status"]}
+                else:
+                    await router.close()
+                    import torch
+                    from grounded_slayer import generate_grounded, load_grounded_model
+                    torch.set_num_threads(args.threads)
+                    model, tokenizer, cfg = load_grounded_model(args.model_dir, args.adapter)
+                    report["experimental_answer"] = generate_grounded(
+                        model, tokenizer, cfg, args.question, report["evidence"]["sources"],
+                        args.max_input_tokens, args.max_new_tokens)
+                    report["experimental_answer"].update(model_dir=args.model_dir, adapter=args.adapter)
+                    report["message"] = "Dodano eksperymentalną, niezweryfikowaną odpowiedź Slayera. Nie jest to zatwierdzona porada techniczna."
             if args.output:
                 Path(args.output).parent.mkdir(parents=True,exist_ok=True)
                 Path(args.output).write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")

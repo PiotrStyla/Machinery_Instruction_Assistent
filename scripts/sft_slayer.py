@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import random
 import time
@@ -13,6 +14,35 @@ import torch.nn.functional as F
 from tokenizers import Tokenizer
 
 from slayer_runtime import DTYPES, load_model
+
+
+class FrozenFP32Linear(nn.Module):
+    """Frozen FP32 weights; optionally retain the surrounding hidden-state dtype."""
+    def __init__(self, head: nn.Linear, preserve_output_dtype=False):
+        super().__init__()
+        if head.weight.requires_grad or (head.bias is not None and head.bias.requires_grad):
+            raise ValueError("output-head upcasting requires frozen base weights")
+        self.register_buffer("weight", head.weight.detach().float(), persistent=False)
+        self.register_buffer("bias", head.bias.detach().float() if head.bias is not None else None, persistent=False)
+        self.preserve_output_dtype = preserve_output_dtype
+
+    def forward(self, hidden):
+        output = F.linear(hidden.float(), self.weight, self.bias)
+        return output.to(hidden.dtype) if self.preserve_output_dtype else output
+
+
+def upcast_frozen_head(model):
+    model.head = FrozenFP32Linear(model.head)
+
+
+def upcast_frozen_blocks(model, indices):
+    for index in indices:
+        block = model.blocks[index]
+        for name, module in list(block.named_modules()):
+            if isinstance(module, nn.Linear):
+                parent_name, _, child_name = name.rpartition(".")
+                parent = block.get_submodule(parent_name) if parent_name else block
+                setattr(parent, child_name, FrozenFP32Linear(module, preserve_output_dtype=True))
 
 
 class LoRALinear(nn.Module):
@@ -71,10 +101,15 @@ def save_adapter(
     block_indices: tuple[int, ...] | None,
     optimizer: torch.optim.Optimizer | None = None,
     global_step: int = 0,
+    fp32_head: bool = False,
+    fp32_blocks: tuple[int, ...] = (),
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "model_dir": model_dir,
+        "base_config_sha256": hashlib.sha256((Path(model_dir) / "config.json").read_bytes()).hexdigest(),
+        "fp32_head": fp32_head,
+        "fp32_blocks": list(fp32_blocks),
         "rank": rank,
         "alpha": alpha,
         "targets": list(targets),
@@ -103,25 +138,37 @@ def load_adapter(model: nn.Module, path: str) -> dict:
 
 def apply_adapter(model: nn.Module, path: str) -> dict:
     payload = torch.load(path, map_location="cpu", weights_only=True)
+    if payload.get("fp32_head"):
+        upcast_frozen_head(model)
     targets = tuple(payload["targets"])
     blocks = payload.get("blocks")
     block_indices = tuple(blocks) if blocks is not None else None
     inject_lora(model, int(payload["rank"]), float(payload["alpha"]), targets, block_indices)
+    upcast_frozen_blocks(model, payload.get("fp32_blocks", []))
     load_adapter(model, path)
     model.eval()
     return payload
 
 
+def format_sft_prompt(instruction: str) -> str:
+    return f"Użytkownik: {instruction}\nAsystent:"
+
+
 def _example(tokenizer: Tokenizer, instruction: str, response: str, max_seq_len: int, device: torch.device):
-    prompt = f"Użytkownik: {instruction}\nAsystent:"
-    full_ids = tokenizer.encode(prompt + " " + response).ids
-    prompt_len = len(tokenizer.encode(prompt).ids)
-    full_ids = full_ids[:max_seq_len]
-    if len(full_ids) < 2 or prompt_len >= len(full_ids):
-        raise ValueError("example has no response tokens after truncation")
+    if not response.strip():
+        raise ValueError("supervised response must not be empty")
+    prompt = format_sft_prompt(instruction)
+    response_start = len(prompt) + 1
+    encoded = tokenizer.encode(prompt + " " + response)
+    first_response = next((i for i, (_, end) in enumerate(encoded.offsets) if end > response_start), None)
+    if first_response is None:
+        raise ValueError("example has no response tokens")
+    full_ids = encoded.ids + [0]
+    if len(full_ids) > max_seq_len:
+        raise ValueError(f"complete example needs {len(full_ids)} tokens including EOS; budget={max_seq_len}")
     input_ids = torch.tensor([full_ids[:-1]], dtype=torch.long, device=device)
     labels = torch.tensor([full_ids[1:]], dtype=torch.long, device=device)
-    labels[:, : max(0, prompt_len - 1)] = -100
+    labels[:, : max(0, first_response - 1)] = -100
     return input_ids, labels
 
 
@@ -163,16 +210,29 @@ def main() -> None:
     parser.add_argument("--resume")
     parser.add_argument("--skip-validation", action="store_true")
     parser.add_argument("--append-metrics", action="store_true")
+    parser.add_argument("--threads", type=int, default=torch.get_num_threads())
+    parser.add_argument("--fp32-head", action="store_true", help="frozen FP32 output projection for CPU SFT")
+    parser.add_argument("--fp32-suffix", action="store_true", help="frozen FP32 linears in LoRA blocks; BF16 hidden states")
     args = parser.parse_args()
     if args.rank < 1 or args.epochs < 1 or args.max_steps < 0:
         raise ValueError("rank and epochs must be positive; max-steps must be non-negative")
+    if args.threads < 1:
+        raise ValueError("threads must be positive")
+    torch.set_num_threads(args.threads)
 
     random.seed(args.seed)
     torch.manual_seed(args.seed)
     train_rows = _read_jsonl(args.train)
     valid_rows = _read_jsonl(args.valid)
-    model, cfg = load_model(args.model_dir, args.dtype, args.device)
     tokenizer = Tokenizer.from_file(f"{args.model_dir}/tokenizer.json")
+    train_examples = [_example(tokenizer, row["instruction"], row["response"], args.max_seq_len, torch.device("cpu"))
+                      for row in train_rows]
+    valid_examples = [_example(tokenizer, row["instruction"], row["response"], args.max_seq_len, torch.device("cpu"))
+                      for row in valid_rows]
+    base_fingerprint = hashlib.sha256((Path(args.model_dir) / "config.json").read_bytes()).hexdigest()
+    model, cfg = load_model(args.model_dir, args.dtype, args.device)
+    if args.fp32_head:
+        upcast_frozen_head(model)
     device = next(model.parameters()).device
     targets = ("qkv", "proj", "down")
     if args.last_blocks < 0 or args.last_blocks > cfg["n_layer"]:
@@ -181,6 +241,8 @@ def main() -> None:
         tuple(range(cfg["n_layer"] - args.last_blocks, cfg["n_layer"])) if args.last_blocks else None
     )
     matched = inject_lora(model, args.rank, args.alpha, targets, block_indices)
+    fp32_blocks = (block_indices if block_indices is not None else tuple(range(cfg["n_layer"]))) if args.fp32_suffix else ()
+    upcast_frozen_blocks(model, fp32_blocks)
     trainable = [parameter for parameter in model.parameters() if parameter.requires_grad]
     if not trainable:
         raise RuntimeError("LoRA injection produced no trainable parameters")
@@ -188,6 +250,13 @@ def main() -> None:
     optimizer = torch.optim.AdamW(trainable, lr=args.learning_rate)
     resume_payload = None
     if args.resume:
+        checked = torch.load(args.resume, map_location="cpu", weights_only=True)
+        if checked.get("base_config_sha256") != base_fingerprint:
+            raise ValueError("resume adapter base-model fingerprint does not match")
+        if checked.get("fp32_head", False) != args.fp32_head:
+            raise ValueError("resume adapter output-head precision does not match")
+        if checked.get("fp32_blocks", []) != list(fp32_blocks):
+            raise ValueError("resume adapter frozen-suffix precision does not match")
         resume_payload = load_adapter(model, args.resume)
         if resume_payload.get("optimizer_state"):
             optimizer.load_state_dict(resume_payload["optimizer_state"])
@@ -203,6 +272,14 @@ def main() -> None:
                 "model": cfg.get("step"),
                 "model_dir": args.model_dir,
                 "train_examples": len(train_rows),
+                "train_sha256": hashlib.sha256(Path(args.train).read_bytes()).hexdigest(),
+                "valid_sha256": hashlib.sha256(Path(args.valid).read_bytes()).hexdigest(),
+                "base_config_sha256": base_fingerprint,
+                "seed": args.seed,
+                "threads": args.threads,
+                "dtype": args.dtype,
+                "max_seq_len": args.max_seq_len,
+                "fp32_head": args.fp32_head,
                 "valid_examples": len(valid_rows),
                 "rank": args.rank,
                 "alpha": args.alpha,
@@ -227,8 +304,7 @@ def main() -> None:
         running = 0.0
         steps_done = 0
         for step, index in enumerate(order, start=1):
-            row = train_rows[index]
-            input_ids, labels = _example(tokenizer, row["instruction"], row["response"], args.max_seq_len, device)
+            input_ids, labels = (value.to(device) for value in train_examples[index])
             loss = _loss(model, input_ids, labels)
             loss.backward()
             grad_norm = float(torch.nn.utils.clip_grad_norm_(trainable, args.grad_clip).item())
@@ -300,14 +376,15 @@ def main() -> None:
     else:
         with torch.inference_mode():
             valid_losses = []
-            for row in valid_rows:
-                input_ids, labels = _example(tokenizer, row["instruction"], row["response"], args.max_seq_len, device)
+            for example in valid_examples:
+                input_ids, labels = (value.to(device) for value in example)
                 valid_losses.append(float(_loss(model, input_ids, labels).item()))
         valid_loss = sum(valid_losses) / len(valid_losses)
         metrics_handle.write(
             json.dumps(
                 {
                     "event": "validation",
+                    "global_step": global_step,
                     "timestamp": time.time(),
                     "valid_loss": valid_loss,
                     "elapsed_seconds": round(time.perf_counter() - started, 3),
@@ -343,6 +420,8 @@ def main() -> None:
         block_indices,
         optimizer,
         global_step,
+        fp32_head=args.fp32_head,
+        fp32_blocks=fp32_blocks,
     )
     metrics = {
         "model": cfg.get("step"),

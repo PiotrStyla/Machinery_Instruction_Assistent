@@ -1,0 +1,372 @@
+{
+  "question": "Porównaj G53 i G54.",
+  "policy": "rules",
+  "rule_decision": {
+    "route": "hybrid",
+    "reason": "multi_topic",
+    "required_sections": [
+      "g53",
+      "g54-g59.3"
+    ],
+    "codes": [
+      "G53",
+      "G54"
+    ],
+    "graph_anchors": [
+      "G53",
+      "G54"
+    ],
+    "hard_block": false,
+    "action": "retrieve"
+  },
+  "decision": {
+    "route": "hybrid",
+    "reason": "multi_topic",
+    "required_sections": [
+      "g53",
+      "g54-g59.3"
+    ],
+    "codes": [
+      "G53",
+      "G54"
+    ],
+    "graph_anchors": [
+      "G53",
+      "G54"
+    ],
+    "hard_block": false,
+    "action": "retrieve"
+  },
+  "classifier_proposal": null,
+  "executed_backends": [
+    "lexical",
+    "graphiti"
+  ],
+  "lexical_subqueries": [
+    "Porównaj G53 i G54.",
+    "G53",
+    "G54"
+  ],
+  "backend_errors": [],
+  "evidence": {
+    "status": "target_coverage_complete",
+    "required_sections": [
+      "g53",
+      "g54-g59.3"
+    ],
+    "missing_sections": [],
+    "covered_sections": [
+      "g53",
+      "g54-g59.3",
+      "g61"
+    ],
+    "rejected": [],
+    "relations": [
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "select coordinate system 1",
+        "extraction": "human_curated",
+        "source": "G54",
+        "target": "coordinate system 1",
+        "relation": "SELECTS_FRAME",
+        "fact": "G54 selects coordinate system 1.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g53",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1540-L1568",
+        "evidence_quote": "G53 is used without G0 or G1 being active",
+        "extraction": "human_curated",
+        "source": "G53",
+        "target": "G0 or G1",
+        "relation": "REQUIRES_ACTIVE",
+        "fact": "G53 requires G0 or G1 to be active (either is sufficient).",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "select coordinate system 2",
+        "extraction": "human_curated",
+        "fact": "G55 selects coordinate system 2.",
+        "relation": "SELECTS_FRAME",
+        "origin": "hybrid_search"
+      },
+      {
+        "chunk_id": "g53",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1540-L1568",
+        "evidence_quote": "'G53' is not modal and\nmust be programmed on each line.",
+        "extraction": "human_curated",
+        "source": "G53",
+        "target": "non-modal",
+        "relation": "HAS_MODALITY",
+        "fact": "G53 is not modal and must be programmed on each line.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g53",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1540-L1568",
+        "evidence_quote": "G53 is used while cutter compensation is on.",
+        "extraction": "human_curated",
+        "source": "G53",
+        "target": "cutter compensation",
+        "relation": "INCOMPATIBLE_WITH",
+        "fact": "G53 is an error while cutter compensation is on.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "select coordinate system 3",
+        "extraction": "human_curated",
+        "fact": "G56 selects coordinate system 3.",
+        "relation": "SELECTS_FRAME",
+        "origin": "hybrid_search"
+      },
+      {
+        "chunk_id": "g53",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1540-L1568",
+        "evidence_quote": "G53 Move in Machine Coordinates",
+        "extraction": "human_curated",
+        "source": "G53",
+        "target": "machine coordinate system",
+        "relation": "USES_FRAME",
+        "fact": "G53 moves in the machine coordinate system.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "selecting a coordinate system is used while cutter compensation is on.",
+        "extraction": "human_curated",
+        "source": "G54",
+        "target": "cutter compensation",
+        "relation": "INCOMPATIBLE_WITH",
+        "fact": "Selecting coordinate system G54 while cutter compensation is on is an error.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "select coordinate system 5",
+        "extraction": "human_curated",
+        "fact": "G58 selects coordinate system 5.",
+        "relation": "SELECTS_FRAME",
+        "origin": "hybrid_search"
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "select coordinate system 4",
+        "extraction": "human_curated",
+        "fact": "G57 selects coordinate system 4.",
+        "relation": "SELECTS_FRAME",
+        "origin": "hybrid_search"
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "selecting a coordinate system is used while cutter compensation is on.",
+        "extraction": "human_curated",
+        "source": "G55",
+        "target": "cutter compensation",
+        "relation": "INCOMPATIBLE_WITH",
+        "fact": "Selecting coordinate system G55 while cutter compensation is on is an error.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g61",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1608-L1613",
+        "evidence_quote": "Moves will slow or stop as needed to reach every programmed point.",
+        "extraction": "human_curated",
+        "fact": "G61 reaches every programmed point, slowing or stopping as needed; exactly co-linear moves do not stop.",
+        "relation": "USES_PATH_MODE",
+        "origin": "hybrid_search"
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "selecting a coordinate system is used while cutter compensation is on.",
+        "extraction": "human_curated",
+        "source": "G57",
+        "target": "cutter compensation",
+        "relation": "INCOMPATIBLE_WITH",
+        "fact": "Selecting coordinate system G57 while cutter compensation is on is an error.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "selecting a coordinate system is used while cutter compensation is on.",
+        "extraction": "human_curated",
+        "source": "G56",
+        "target": "cutter compensation",
+        "relation": "INCOMPATIBLE_WITH",
+        "fact": "Selecting coordinate system G56 while cutter compensation is on is an error.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "selecting a coordinate system is used while cutter compensation is on.",
+        "extraction": "human_curated",
+        "source": "G58",
+        "target": "cutter compensation",
+        "relation": "INCOMPATIBLE_WITH",
+        "fact": "Selecting coordinate system G58 while cutter compensation is on is an error.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "selecting a coordinate system is used while cutter compensation is on.",
+        "extraction": "human_curated",
+        "source": "G59.3",
+        "target": "cutter compensation",
+        "relation": "INCOMPATIBLE_WITH",
+        "fact": "Selecting coordinate system G59.3 while cutter compensation is on is an error.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "select coordinate system 6",
+        "extraction": "human_curated",
+        "fact": "G59 selects coordinate system 6.",
+        "relation": "SELECTS_FRAME",
+        "origin": "hybrid_search"
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "selecting a coordinate system is used while cutter compensation is on.",
+        "extraction": "human_curated",
+        "source": "G59",
+        "target": "cutter compensation",
+        "relation": "INCOMPATIBLE_WITH",
+        "fact": "Selecting coordinate system G59 while cutter compensation is on is an error.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "selecting a coordinate system is used while cutter compensation is on.",
+        "extraction": "human_curated",
+        "source": "G59.2",
+        "target": "cutter compensation",
+        "relation": "INCOMPATIBLE_WITH",
+        "fact": "Selecting coordinate system G59.2 while cutter compensation is on is an error.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "selecting a coordinate system is used while cutter compensation is on.",
+        "extraction": "human_curated",
+        "source": "G59.1",
+        "target": "cutter compensation",
+        "relation": "INCOMPATIBLE_WITH",
+        "fact": "Selecting coordinate system G59.1 while cutter compensation is on is an error.",
+        "origin": "graph_traversal",
+        "hop": 2
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "select coordinate system 9",
+        "extraction": "human_curated",
+        "fact": "G59.3 selects coordinate system 9.",
+        "relation": "SELECTS_FRAME",
+        "origin": "hybrid_search"
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "select coordinate system 7",
+        "extraction": "human_curated",
+        "fact": "G59.1 selects coordinate system 7.",
+        "relation": "SELECTS_FRAME",
+        "origin": "hybrid_search"
+      },
+      {
+        "chunk_id": "g54-g59.3",
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "evidence_quote": "select coordinate system 8",
+        "extraction": "human_curated",
+        "fact": "G59.2 selects coordinate system 8.",
+        "relation": "SELECTS_FRAME",
+        "origin": "hybrid_search"
+      }
+    ],
+    "sources": [
+      {
+        "id": "g53",
+        "title": "LinuxCNC 2.9.4 G-Codes",
+        "section": "G53 Move in Machine Coordinates",
+        "text": "[[gcode:g53]]\n== G53 Move in Machine Coordinates(((G53 Machine Coordinates)))\n\n[source,{ngc}]\n----\nG53 axes\n----\n\nTo move in the <<sec:machine-coordinate-system,machine coordinate system>>,\nprogram 'G53' on the same line as a linear move. 'G53' is not modal and\nmust be programmed on each line. 'G0' or 'G1' does not have to be\nprogrammed on the same line if one is currently active.\n\nFor example 'G53 G0 X0 Y0 Z0' will move the axes to the home position\neven if the currently selected coordinate system has offsets in effect.\n\n.G53 Example\n[source,{ngc}]\n----\nG53 G0 X0 Y0 Z0 (rapid linear move to the machine origin)\nG53 X2 (rapid linear move to absolute coordinate X2)\n----\n\nSee <<gcode:g0,G0>> section for more information.\n\nIt is an error if:\n\n* G53 is used without G0 or G1 being active,\n* or G53 is used while cutter compensation is on.",
+        "revision": "b8ccac8f835c0610233fdf799255c63f2b9738ac",
+        "source_path": "docs/src/gcode/g-code.adoc",
+        "line_start": 1540,
+        "line_end": 1568,
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1540-L1568",
+        "retriever": "graphiti"
+      },
+      {
+        "id": "g54-g59.3",
+        "title": "LinuxCNC 2.9.4 G-Codes",
+        "section": "G54-G59.3 Select Coordinate System",
+        "text": "[[gcode:g54-g59.3]]\n== G54-G59.3 Select Coordinate System(((G54-G59.3 Select Coordinate System)))\n\n* 'G54'   - select coordinate system 1\n* 'G55'   - select coordinate system 2\n* 'G56'   - select coordinate system 3\n* 'G57'   - select coordinate system 4\n* 'G58'   - select coordinate system 5\n* 'G59'   - select coordinate system 6\n* 'G59.1' - select coordinate system 7\n* 'G59.2' - select coordinate system 8\n* 'G59.3' - select coordinate system 9\n\nThe coordinate systems store the axis values and the XY rotation angle\naround the Z axis in the parameters shown in the following table.\n\n.Coordinate System Parameters\n[width=\"80%\",options=\"header\",cols=\"<,11*^\"]\n|===\n|Select |CS |X    |Y    |Z    |A    |B    |C    |U    |V    |W    |R\n|G54    |1  |5221 |5222 |5223 |5224 |5225 |5226 |5227 |5228 |5229 |5230\n|G55    |2  |5241 |5242 |5243 |5244 |5245 |5246 |5247 |5248 |5249 |5250\n|G56    |3  |5261 |5262 |5263 |5264 |5265 |5266 |5267 |5268 |5269 |5270\n|G57    |4  |5281 |5282 |5283 |5284 |5285 |5286 |5287 |5288 |5289 |5290\n|G58    |5  |5301 |5302 |5303 |5304 |5305 |5306 |5307 |5308 |5309 |5310\n|G59    |6  |5321 |5322 |5323 |5324 |5325 |5326 |5327 |5328 |5329 |5330\n|G59.1  |7  |5341 |5342 |5343 |5344 |5345 |5346 |5347 |5348 |5349 |5350\n|G59.2  |8  |5361 |5362 |5363 |5364 |5365 |5366 |5367 |5368 |5369 |5370\n|G59.3  |9  |5381 |5382 |5383 |5384 |5385 |5386 |5387 |5388 |5389 |5390\n|===\n\nIt is an error if:\n\n* selecting a coordinate system is used while cutter compensation is on.\n\nSee the <<cha:coordinate-system,Coordinate System>> section for an\noverview of coordinate systems.",
+        "revision": "b8ccac8f835c0610233fdf799255c63f2b9738ac",
+        "source_path": "docs/src/gcode/g-code.adoc",
+        "line_start": 1570,
+        "line_end": 1606,
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1570-L1606",
+        "retriever": "graphiti"
+      },
+      {
+        "id": "g61",
+        "title": "LinuxCNC 2.9.4 G-Codes",
+        "section": "G61 Exact Path Mode",
+        "text": "[[gcode:g61]]\n== G61 Exact Path Mode(((G61 Exact Path Mode)))(((Trajectory Control)))\n\n* 'G61' - Exact path mode, movement exactly as programmed.\n  Moves will slow or stop as needed to reach every programmed point. If\n  two sequential moves are exactly co-linear movement will not stop.",
+        "revision": "b8ccac8f835c0610233fdf799255c63f2b9738ac",
+        "source_path": "docs/src/gcode/g-code.adoc",
+        "line_start": 1608,
+        "line_end": 1613,
+        "url": "https://github.com/LinuxCNC/linuxcnc/blob/b8ccac8f835c0610233fdf799255c63f2b9738ac/docs/src/gcode/g-code.adoc#L1608-L1613",
+        "retriever": "graphiti"
+      }
+    ],
+    "generation_allowed": false,
+    "scope": "Coverage of explicitly identified source topics only; not semantic entailment or machine compatibility.",
+    "answer_policy": "source_excerpts_only"
+  },
+  "notice": "Informacja dokumentacyjna, nie instrukcja uruchomienia lub naprawy maszyny. Wymagane zatwierdzone procedury i wykwalifikowany personel.",
+  "message": "Dodano eksperymentalną, niezweryfikowaną odpowiedź Slayera. Nie jest to zatwierdzona porada techniczna.",
+  "elapsed_seconds": 47.177,
+  "experimental_answer": {
+    "status": "generated_unverified",
+    "answer": " G53",
+    "input_tokens": 1229,
+    "generated_tokens": 2,
+    "elapsed_seconds": 104.4,
+    "source_entailment": "not_automatically_verified",
+    "precision": "BF16 hidden states/backbone; frozen FP32 head and last-two-block linears; FP32 LoRA",
+    "notice": "Eksperymentalna odpowiedź Slayera, niezatwierdzona instrukcja naprawy lub uruchomienia maszyny.",
+    "model_dir": "models/Slayer1B-1.05",
+    "adapter": "adapters/machine_expert/1.05/epoch-003.pt"
+  }
+}

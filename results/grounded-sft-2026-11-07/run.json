@@ -1,0 +1,39 @@
+{
+  "data": "data/machine_expert/sft",
+  "models_root": "models",
+  "output_root": "reports/machine_training",
+  "adapters_root": "adapters/machine_expert",
+  "releases": [
+    "1.05",
+    "1.06"
+  ],
+  "epochs": 3,
+  "learning_rate": 0.001,
+  "max_seq_len": 1024,
+  "max_new_tokens": 64,
+  "threads": 4,
+  "seed": 20261106,
+  "dataset": {
+    "source_corpus_sha256": "608e3050478e3e91a8135df796b0db5e7ab9876a9c19220eb2f1e68b3471f26e",
+    "source_revision": "b8ccac8f835c0610233fdf799255c63f2b9738ac",
+    "train_examples": 24,
+    "valid_examples": 9,
+    "test_examples": 9,
+    "split_unit": "distinct manually authored questions; source sections and many facts are shared",
+    "unseen_documents": false,
+    "label_generation_at_runtime": false,
+    "label_provenance": "Existing project references plus AI-assistant-authored paraphrases/references; source-span checks only, no independent human review in this workflow.",
+    "provenance_note": "Clarified the ambiguous generated_labels metadata flag during the run; no sample bytes, hashes or training settings were changed.",
+    "evaluation_warning": "Strict full-answer reference match is not a semantic truth verifier or industrial benchmark.",
+    "sha256": {
+      "train_cases.jsonl": "31cd2260696df0ac16d7f990feac381bd0f6a12099e42dea6ec5ebfe87e13ebf",
+      "train.jsonl": "ed4490fc51928fec922e1425583e017532b24109e828e40e46f152127e0210b4",
+      "valid_cases.jsonl": "55ee7f650474de569783e790494cb4d7085d2709cbedd103122654648a6c9d24",
+      "valid.jsonl": "eaea98a6aad0dcc8a500b5a3bd378d2da5cbc0749a7d5d04af5ff08ba2cfdebc",
+      "test_cases.jsonl": "091d9c9457aebf46b35307dd84c2c137d785f4aa5448b7f09aa440d7516d3486",
+      "test.jsonl": "3312c7390e80b2676e984da003a1a9fc4bf1b7853d7d3b42c95ab72b713ab119"
+    }
+  },
+  "execution": "CPU, sequential releases",
+  "precision": "frozen FP32 head/suffix linears; remaining backbone and hidden states BF16; FP32 LoRA"
+}

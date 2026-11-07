@@ -56,7 +56,7 @@ Raw Graphiti search returns nearest facts; proximity is not proof that a questio
 
 Two-hop traversal executes graph queries against the persisted Graphiti topology. From G53 it reaches the shared `cutter compensation` concept and the coordinate-system selection commands G54–G59.3 in a different source section. The result carries each relation's source URL and exact quote. A shared constraint is not proof of a causal machine fault.
 
-For automatic selection between direct lookup, Graphiti relationship traversal, hybrid search and refusal, use the [decision router](machine_expert.md#decision-routing-and-evidence-gate). It retains source provenance and reports incomplete coverage separately; it does not enable Slayer-generated technical advice.
+For automatic selection between direct lookup, Graphiti relationship traversal, hybrid search and refusal, use the [decision router](machine_expert.md#decision-routing-and-evidence-gate). It retains source provenance and reports incomplete coverage separately. Source-only behavior remains the default; explicitly requested [Slayer research output](grounded_sft.md) is unverified, not approved technical advice.
 
 ## Reproduce comparison
 

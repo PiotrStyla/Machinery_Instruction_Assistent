@@ -1,0 +1,18 @@
+{
+  "release": "1.06",
+  "split": "valid",
+  "phase": "epoch",
+  "global_step": 24,
+  "examples": 9,
+  "mean_loss": 1.9648537635803223,
+  "exact_match_rate": 0.0,
+  "citation_rate": 0.8888888888888888,
+  "median_generation_seconds": 36.194,
+  "elapsed_seconds": 632.803,
+  "model_dir": "models/Slayer1B-1.06",
+  "adapter": "adapters/machine_expert/1.06/epoch-001.pt",
+  "cases_sha256": "55ee7f650474de569783e790494cb4d7085d2709cbedd103122654648a6c9d24",
+  "source_corpus_sha256": "608e3050478e3e91a8135df796b0db5e7ab9876a9c19220eb2f1e68b3471f26e",
+  "evidence_mode": "oracle_complete_source_sections",
+  "quality_warning": "Exact full-answer match and citation IDs are not a semantic truth or safety verifier."
+}

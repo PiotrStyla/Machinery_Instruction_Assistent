@@ -20,11 +20,11 @@ MODEL_DIRS = [path for path in MODEL_DIRS if (path / "train_gpt_ref_r23.py").exi
 
 @unittest.skipUnless(MODEL_DIRS, "download a Slayer release first")
 class KVCacheParityTest(unittest.TestCase):
-    def make_model(self, model_dir):
+    def make_model(self, model_dir, n_layer=2):
         trainer = runtime._trainer_module(str(model_dir))
         cfg = SimpleNamespace(
             vocab=32,
-            n_layer=2,
+            n_layer=n_layer,
             n_embd=16,
             n_head=2,
             block=16,
@@ -81,6 +81,34 @@ class KVCacheParityTest(unittest.TestCase):
         expected_first = int(runtime.sample(prefill_logits).item())
         generated = runtime.generate(model, tokenizer, "prompt", 1)
         self.assertEqual(generated[:3], [1, 2, expected_first])
+
+    def test_nonzero_lora_and_cpu_precision_match_reference_during_cached_decode(self):
+        from sft_slayer import inject_lora, upcast_frozen_blocks, upcast_frozen_head
+
+        for model_dir in MODEL_DIRS:
+            with self.subTest(release=model_dir.name), torch.random.fork_rng(devices=[]):
+                model = self.make_model(model_dir, n_layer=3).to(torch.bfloat16).requires_grad_(False)
+                inject_lora(model, 2, 4, ("qkv", "proj", "down"), (1, 2))
+                with torch.no_grad():
+                    for name, parameter in model.named_parameters():
+                        if "lora_b" in name:
+                            parameter.normal_(mean=0.0, std=0.15)
+                upcast_frozen_head(model)
+                upcast_frozen_blocks(model, (1, 2))
+                model.eval()
+                ids = torch.tensor([[1, 2, 3]])
+                with torch.inference_mode():
+                    actual, cache = runtime.SlayerKVCache.prefill(model, ids)
+                    expected = model(ids)[0][:, -1:]
+                    torch.testing.assert_close(actual, expected, rtol=0.02, atol=0.002)
+                    self.assertEqual(actual.argmax(-1).tolist(), expected.argmax(-1).tolist())
+                    for token in (4, 5):
+                        next_id = torch.tensor([[token]])
+                        ids = torch.cat((ids, next_id), dim=1)
+                        actual = cache.decode(next_id)
+                        expected = model(ids)[0][:, -1:]
+                        torch.testing.assert_close(actual, expected, rtol=0.02, atol=0.002)
+                        self.assertEqual(actual.argmax(-1).tolist(), expected.argmax(-1).tolist())
 
 if __name__ == "__main__":
     unittest.main()

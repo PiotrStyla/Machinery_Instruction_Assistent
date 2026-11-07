@@ -4,7 +4,7 @@
 
 Projekt rozwijany pod nazwą roboczą **SLAYER Machine Expert**. Celem jest sprawdzenie, czy dokumentację przemysłową można przeszukiwać i analizować na zwykłym komputerze, na CPU, bez płatnego API i bez wysyłania pytań do zewnętrznego modelu.
 
-**Obecna wersja jest eksperymentem badawczym CLI, nie gotowym systemem diagnostyki lub naprawy maszyn.** Router zwraca źródła i metadane, nie zatwierdzone instrukcje działania. Nie łączy się ze sterownikiem CNC i nie wykonuje poleceń na maszynie.
+**Obecna wersja jest eksperymentem badawczym CLI, nie gotowym systemem diagnostyki lub naprawy maszyn.** Domyślnie router zwraca źródła i metadane. Jawne `--model-dir` włącza dodatkową, eksperymentalną odpowiedź Slayera; nie jest ona zatwierdzoną instrukcją działania. Projekt nie łączy się ze sterownikiem CNC i nie wykonuje poleceń na maszynie.
 
 ## Spis treści
 
@@ -15,6 +15,7 @@ Projekt rozwijany pod nazwą roboczą **SLAYER Machine Expert**. Celem jest spra
 - [Szybki start: samo wyszukiwanie](#szybki-start-samo-wyszukiwanie)
 - [Uruchomienie Graphiti](#uruchomienie-graphiti)
 - [Opcjonalny model decyzyjny Laya](#opcjonalny-model-decyzyjny-laya)
+- [Uczenie obu wersji i wykresy](#uczenie-obu-wersji-i-wykresy)
 - [Format wyniku i kontrola źródeł](#format-wyniku-i-kontrola-źródeł)
 - [Wyniki pomiarów](#wyniki-pomiarów)
 - [Testy i odtworzenie eksperymentów](#testy-i-odtworzenie-eksperymentów)
@@ -32,8 +33,9 @@ Projekt rozwijany pod nazwą roboczą **SLAYER Machine Expert**. Celem jest spra
 - Oddzielna kontrola pochodzenia źródeł, ich spójności i pokrycia rozpoznanych tematów.
 - Eksperymentalny lokalny klasyfikator Laya, porównany z regułami i **niewłączony domyślnie**.
 - Zestawy pytań po polsku, raportowanie JSON i testy regresyjne.
+- Jawnie włączana generacja Slayer1B 1.05/1.06 z oddzielnymi adapterami LoRA, pomiarami przed/po i lokalnymi wykresami rzeczywistych dzienników.
 
-Nie ma obecnie interfejsu WWW, obsługi dowolnego PDF, OCR schematów ani automatycznego dołączania nowych instrukcji. Pliki źródłowe przygotowuje jawny, kontrolowany proces opisany poniżej.
+Nie ma obecnie interfejsu czatu WWW, obsługi dowolnego PDF, OCR schematów ani automatycznego dołączania nowych instrukcji. Dostępny jest lokalny panel wykresów treningu. Pliki źródłowe przygotowuje jawny, kontrolowany proces opisany poniżej.
 
 ## Zakres dokumentacji
 
@@ -68,6 +70,8 @@ flowchart TD
     X --> E["Niezależna kontrola źródeł i pokrycia tematów"]
     G --> E
     E --> O["JSON: cytaty, źródła, relacje, braki i status"]
+    E -. "jawne model-dir i komplet źródeł" .-> M["Slayer1B + opcjonalny adapter LoRA"]
+    M --> U["Niezweryfikowana odpowiedź eksperymentalna"]
 ```
 
 ### Wybór ścieżki
@@ -96,9 +100,9 @@ Automatyczna ekstrakcja przez Qwen jest oddzielnym eksperymentem, z osobną baz�
 | `intfloat/multilingual-e5-small` | Rzeczywiste embeddingi CPU, 384 wymiary; pytania po polsku i fakty po angielsku. |
 | `Qwen/Qwen2.5-1.5B-Instruct` | Opcjonalna automatyczna ekstrakcja strukturalna; nie generuje odpowiedzi w domyślnym routerze. |
 | `convaiinnovations/laya-multilingual` | Eksperymentalny wybór ścieżki, nie ocena prawdziwości odpowiedzi. |
-| Slayer1B 1.05 / 1.06 | Oddzielne eksperymenty inferencji, jakości i dostrajania; nieaktywny generator w routerze. |
+| Slayer1B 1.05 / 1.06 | Opcjonalne odpowiedzi ze źródeł (`--model-dir`) oraz oddzielne adaptery LoRA i kontrolowane pomiary przed/po. |
 
-**Do samego wyszukiwania nie trzeba pobierać Slayer1B ani trenować modelu.** Testy wcześniejszych wersji pokazały, że Slayer potrafił zaprzeczyć dostarczonemu źródłu dotyczącemu modalności G53. Lepsze wyszukiwanie nie naprawia automatycznie tego problemu, dlatego router zwraca wyłącznie materiał dokumentacyjny (`generation_allowed: false`).
+**Do samego wyszukiwania nie trzeba pobierać Slayer1B ani trenować modelu.** Testy wcześniejszych wersji pokazały, że Slayer potrafił zaprzeczyć dostarczonemu źródłu dotyczącemu modalności G53. Dlatego domyślny wynik pozostaje źródłowy, a wynik jawnie włączonego modelu ma status `generated_unverified`. Kontrola źródeł nie nadaje mu zatwierdzenia (`generation_allowed: false`).
 
 ## Szybki start: samo wyszukiwanie
 
@@ -189,6 +193,29 @@ Model jest ładowany raz na proces. Pierwsze uruchomienie obejmuje koszt wczytan
 
 Odmowa wynikająca z twardego ograniczenia zakresu następuje przed ładowaniem Laya. Dotyczy to np. nieznanego alarmu E-247, nawet przy `--policy laya`.
 
+## Uczenie obu wersji i wykresy
+
+Nowa ścieżka łączy rzeczywiste modele Slayer1B z dokumentacją i umożliwia ich lokalne dostrajanie LoRA. Wagi bazowe pozostają zamrożone, a adaptery 1.05 i 1.06 są oddzielne i sprawdzane pod kątem zgodności z modelem. Wymaga to wcześniej pobranych plików obu modeli, tokenizerów i ich referencyjnego kodu w `models/Slayer1B-1.05` oraz `models/Slayer1B-1.06`; nie są dołączone do Git.
+
+Przebieg obejmuje pomiar bazowy, trening, walidację po epokach i końcowy test wybranego walidacyjnie adaptera. Rozdzielono pytania treningowe, walidacyjne i testowe, ale dokumenty i część faktów są wspólne. Przykłady opracowano z udziałem asystenta AI, bez niezależnej walidacji eksperckiej w tym przebiegu. **Nie zakładamy poprawy:** spadek loss, ścisła zgodność całej odpowiedzi ze wzorcem i poprawne identyfikatory cytowania są różnymi diagnostykami.
+
+W nowym środowisku Python 3.11 najpierw zainstaluj sprawdzone wersje zależności: `uv pip install --python .venv\Scripts\python.exe -r pyproject.toml --extra training`. Nie zmieniaj zależności ani danych podczas już uruchomionego treningu. Minimalne wyszukiwanie z szybkiego startu nadal nie wymaga pakietów ML.
+
+```powershell
+.venv\Scripts\python.exe scripts\prepare_machine_sft.py
+.venv\Scripts\python.exe scripts\run_machine_training.py --epochs 3 --max-new-tokens 64
+```
+
+Nie uruchamiaj ponownie istniejącego przebiegu ani drugiego modelu równolegle na komputerze z małą ilością wolnej pamięci. Kontroler odmawia nadpisania wyników i checkpointów. Dla nowego eksperymentu trzeba wskazać nowe katalogi wyników i adapterów.
+
+Panel lokalny: **http://127.0.0.1:8876/dashboard.html**. Powstaje z rzeczywistych dzienników JSONL, bez zewnętrznego serwisu śledzenia. Uruchomienie panelu, polityka precyzji CPU, pełny protokół oceny i użycie adaptera przez router: [szczegółowy opis grounded SFT](specs/grounded_sft.md).
+
+**Pierwszy przebieg ukończono 7 listopada 2026 r.: po trzy epoki i 72 kroki LoRA dla każdej wersji.** Loss walidacyjny i testowy spadły, ale ścisła zgodność pełnych odpowiedzi testowych pozostała zerowa. Występują odpowiedzi niepełne i sprzeczne z dokumentacją, również z prawidłowym identyfikatorem cytatu. Nie awansujemy żadnego adaptera do roli zatwierdzonego doradcy; domyślna ścieżka nadal zwraca źródła. Wyniki i konkretne błędy opisuje [raport ukończonego przebiegu](specs/grounded_sft.md#observed-first-run-2026-11-07).
+
+**Wyniki dostępne w repozytorium:** [publiczny raport, pełne dzienniki i odpowiedzi przed/po](results/grounded-sft-2026-11-07/README.md). Do ich obejrzenia nie potrzeba wag ani uruchamiania treningu. Panel HTML można pobrać razem z repozytorium i otworzyć lokalnie; GitHub wyświetla sam plik HTML jako kod.
+
+![Wykresy rzeczywistego treningu Slayer1B 1.05 i 1.06](results/grounded-sft-2026-11-07/training.png)
+
 ## Format wyniku i kontrola źródeł
 
 Komenda `ask` wypisuje JSON. `--output` zapisuje ten sam wynik do pliku. Najważniejsze pola:
@@ -210,7 +237,7 @@ Komenda `ask` wypisuje JSON. `--output` zapisuje ten sam wynik do pliku. Najważ
 | `relationship_evidence_missing` | Ścieżka grafowa nie dostarczyła relacji z wymaganą proweniencją. |
 | `refused` / `clarification_required` | Odmowa odpowiedzi lub potrzeba doprecyzowania pytania. |
 
-**Komplet tematów nie oznacza poprawnej odpowiedzi.** Kontrola nie dowodzi, że relacja logicznie wynika z cytatu, że zebrano wszystkie ostrzeżenia ani że instrukcja pasuje do danego egzemplarza maszyny. `generation_allowed` zawsze pozostaje `false`.
+**Komplet tematów nie oznacza poprawnej odpowiedzi.** Kontrola nie dowodzi, że relacja logicznie wynika z cytatu, że zebrano wszystkie ostrzeżenia ani że instrukcja pasuje do danego egzemplarza maszyny. `generation_allowed` pozostaje `false`: źródła nie zatwierdzają porady. Jawnie wywołany wynik badawczy jest osobnym polem `experimental_answer`, zawsze niezweryfikowanym.
 
 ## Wyniki pomiarów
 
@@ -245,16 +272,13 @@ Pełny zestaw testów wymaga zależności środowiska Graphiti, w tym PyTorch:
 
 Ostatnia komenda wymaga dodatkowo przygotowanej Laya. Porównuje oba selektory, ale wykonuje domyślnie ścieżki reguł. Dodanie `--policy laya` uruchamia ścieżki wybrane przez klasyfikator po zastosowaniu twardych ograniczeń.
 
-Sprawdzone wyniki zestawu testów:
+Sprawdzony bieżący zestaw: **43/43 testy zaliczone** w `.venv-graphiti`.
 
-| Środowisko | Zaliczone | Pominięte |
-|---|---:|---:|
-| Lokalne badawcze, z pobranymi wagami Slayera | 26 | 0 |
-| Świeżo wyeksportowany zestaw publikacyjny, bez wag Slayera | 23 | 3 |
+Testy cache korzystają z małych, losowo inicjalizowanych modeli z oryginalnego kodu GPT, również z niezerową LoRA i polityką precyzji CPU. Wymagają lokalnego referencyjnego modułu Pythona, nie pełnych wag 1B; przy jego braku są pomijane. To sprawdzenie zgodności obliczeń, nie dowód jakości pełnego modelu. Pozostałe regresje obejmują m.in. rozróżnianie kodów, zakres dokumentacji, integralność źródeł, granice tokenizacji/EOS, zgodność adaptera, zamrożenie bazy oraz rozdzielenie i odczyt rzeczywistych pomiarów.
 
-Trzy pominięte testy dotyczą cache/inferencji Slayera i wymagają jego wag, których repozytorium nie zawiera. Pozostałe testy obejmują m.in. kody z częścią dziesiętną, jednostki czasu a długości, nieznane alarmy, inny sterownik, pierwszeństwo ograniczeń, brak części źródeł, zmodyfikowany korpus/cytat i błędy backendu. Na świeżym zestawie plików dodatkowo odtworzono indeks SQLite oraz graf z 56 encjami i 42 relacjami i wykonano wszystkie 24 scenariusze routera. Zależności i cache modeli E5/Qwen pochodziły z przygotowanego środowiska tej samej stacji roboczej; nie był to test instalacji na nowym komputerze.
+Pierwszy zestaw publikacyjny dodatkowo sprawdzono po świeżym eksporcie: odbudowano indeks SQLite, graf z 56 encjami i 42 relacjami oraz wykonano 24 scenariusze routera. Korzystał z przygotowanych zależności i cache E5/Qwen tej samej stacji roboczej, nie z nowej instalacji całego środowiska. Pełne pomiary generacji i uczenia Slayera są oddzielnymi eksperymentami, nie wynikiem samych testów jednostkowych.
 
-Raporty powstają lokalnie w `reports/`, np. `machine_expert_router.json`. Nie są dołączane do repozytorium: mogą zawierać lokalne ścieżki i surowe wyjścia eksperymentów. To samo dotyczy baz SQLite/Kuzu, cache, wag i środowisk. Udokumentowane wyniki odnoszą się do konkretnego przebiegu, nie do obietnicy identycznych czasów na innym sprzęcie.
+Oryginalne raporty powstają lokalnie w `reports/`, np. `machine_expert_router.json`. Ten katalog nie jest dołączany do repozytorium: może zawierać lokalne ścieżki i surowe wyjścia eksperymentów. Jawnie przygotowany eksport ukończonego treningu znajduje się w `results/grounded-sft-2026-11-07/`: zawiera rzeczywiste pomiary i odpowiedzi, ze ścieżkami projektu zamienionymi na względne oraz opisem przekształcenia i hashami. Bazy SQLite/Kuzu, cache, wagi, adaptery i środowiska nadal pozostają poza Git. Udokumentowane wyniki odnoszą się do konkretnego przebiegu, nie do obietnicy identycznych czasów na innym sprzęcie.
 
 ## Struktura repozytorium
 
@@ -270,6 +294,12 @@ scripts/
   curate_machine_graph.py         jawne, źródłowe relacje grafu
   fetch_machine_docs.py           pobranie przypiętej dokumentacji
   evaluate_machine_expert.py      osobny test zgodności generacji Slayera ze źródłem
+  grounded_slayer.py               wspólny prompt i niezweryfikowana odpowiedź z modelu
+  prepare_machine_sft.py           jawne dane i rozdzielenie pytań
+  run_machine_training.py          sekwencyjne uczenie obu wersji i wybór adaptera
+  evaluate_machine_sft.py          pomiary odpowiedzi przed/po
+  plot_machine_training.py         lokalny panel HTML/SVG
+  training_measurements.py         logi i ścisłe diagnostyki odpowiedzi
   ...                             wcześniejsze eksperymenty inferencji i SFT
 data/machine_expert/
   chunks.jsonl                    dziewięć sekcji dokumentacji
@@ -278,6 +308,7 @@ data/machine_expert/
   questions.jsonl                 bazowy zestaw pytań
   relationship_questions.jsonl    pytania wieloźródłowe
   router_cases.jsonl              zestaw rozwojowy routingu
+  sft/                            dane grounded SFT, podziały i manifest
   original/                       oryginalne źródła, uznanie autorstwa i licencja
 tests/                            testy regresyjne
 specs/                            szczegółowe eksperymenty i historia decyzji
@@ -293,7 +324,7 @@ Repozytorium zachowuje również wcześniejsze skrypty Slayer1B i dane eksperyme
 2. Dziewięć sekcji LinuxCNC nie zastępuje instrukcji konkretnej maszyny i jej aktualnej rewizji.
 3. Wspólna cecha w grafie nie dowodzi związku przyczynowego usterki.
 4. Wyszukanie źródła, zgodny cytat i confidence modelu nie stanowią zatwierdzenia porady.
-5. Obecny router nie uruchamia generowania odpowiedzi Slayerem. Jego wcześniejsze błędy pozostają udokumentowane.
+5. Opcjonalne generowanie Slayerem wymaga `--model-dir`. Odpowiedzi pozostają niezweryfikowane; jego wcześniejsze błędy są udokumentowane, a nowe dostrajanie jest mierzone osobno.
 6. Instalacja jest etapem sieciowym; tryb offline dotyczy późniejszego działania na wcześniej przygotowanych zasobach.
 7. Kuzu i niewielki zestaw rozwojowy ograniczają przydatność obecnej konfiguracji produkcyjnej.
 8. Obsługa innych instrukcji wymaga sprawdzenia praw do przetwarzania, przygotowania źródeł, grafu, zakresu routingu i niezależnej ewaluacji. Nie wystarczy wskazać ścieżki do dowolnego PDF.

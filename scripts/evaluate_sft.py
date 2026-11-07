@@ -8,7 +8,7 @@ from pathlib import Path
 from tokenizers import Tokenizer
 
 from slayer_runtime import DTYPES, generate, load_model
-from sft_slayer import apply_adapter
+from sft_slayer import apply_adapter, format_sft_prompt
 
 
 def main() -> None:
@@ -32,7 +32,7 @@ def main() -> None:
 
     with output.open("w", encoding="utf-8") as handle:
         for index, row in enumerate(rows):
-            prompt = f"Użytkownik: {row['instruction']}\nAsystent:"
+            prompt = format_sft_prompt(row["instruction"])
             started = time.perf_counter()
             generated = generate(model, tokenizer, prompt, args.max_new_tokens, temperature=0.0, top_k=0)
             elapsed = time.perf_counter() - started
