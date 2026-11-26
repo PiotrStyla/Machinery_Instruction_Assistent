@@ -5,6 +5,7 @@ its reference architecture and adds only inference-time loading and KV caching.
 """
 from __future__ import annotations
 
+import glob
 import importlib.util
 import json
 import os
@@ -31,8 +32,23 @@ def resolve_device(name: str) -> torch.device:
     return torch.device(name)
 
 
+def _trainer_source(model_dir: str) -> str:
+    """The trainer file that defines the GPT class for this checkpoint.
+
+    Slayer packages ship `train_gpt_ref_r23.py` (1.00-1.06) or `train_gpt_ref_r24_2.py`
+    (1.09+); the weights were saved from the matching class, so the newest file in the
+    directory is the right one.
+    """
+    candidates = sorted(glob.glob(os.path.join(model_dir, "train_gpt_ref_*.py")))
+    if not candidates:
+        raise RuntimeError(
+            f"Cannot load model source: no train_gpt_ref_*.py in {model_dir}"
+        )
+    return candidates[-1]
+
+
 def _trainer_module(model_dir: str):
-    source = os.path.join(model_dir, "train_gpt_ref_r23.py")
+    source = _trainer_source(model_dir)
     spec = importlib.util.spec_from_file_location("slayer_trainer", source)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Cannot load model source: {source}")

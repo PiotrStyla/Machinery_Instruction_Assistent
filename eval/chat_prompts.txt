@@ -1,0 +1,5 @@
+Wymień trzy podstawowe parametry skrawania i wyjaśnij krótko, co opisują.
+Co to jest G90 w sterowaniu CNC?
+Wyjaśnij w dwóch zdaniach różnicę między G53 a G54.
+Podaj przykład komendy, która ustawia punkt zerowy przedmiotu.
+Kim jesteś i do czego służysz?
