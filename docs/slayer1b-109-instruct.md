@@ -134,3 +134,45 @@ python slayer_server.py --pkg models/Slayer1B-1.09-Instruct --port 8001 --log re
 Uwagi metodologiczne: panel lm-eval jest w większości loglikelihood-owy, więc mierzy wiedzę, a
 nie posłuszeństwo instrukcjom; `generate_until` w adapterze jest greedy i **bez szablonu ChatML**,
 więc wynik instructa będzie zaniżony — do uczciwego porównania trzeba dodać szablon do adaptera.
+
+## GPU (Colab T4) i panel lm-eval
+
+Notebook: `slayer1b_gpu_bench.ipynb` w repo (18 komórek) — klon gałęzi, budowa paczki, nasz zestaw,
+panel. Wyniki z przebiegu na T4:
+
+| pomiar | CPU fp32 | T4 fp32 (Colab) |
+|---|---|---|
+| pętle, greedy, 192 tokeny | 3,1 tok/s | **27,8 tok/s** |
+| pętle, T=0,3 / kara 1,1 | 3,2 tok/s | **31,0 tok/s** |
+| powtórzenia (greedy / sampled) | 0,255 / 0,022 | 0,255 / 0,022 |
+| domknięte tury (długie odpowiedzi) | 0/3 | **0/3** |
+
+Czyli GPU daje ~9× prędkości i **nie zmienia zachowania**: te same wskaźniki powtórzeń i nadal brak
+`<|im_end|>` przy długich odpowiedziach. Domknięcie zależy od długości odpowiedzi, nie od sprzętu:
+krótkie pytania czatu zamykały się 4/5 przy budżecie 64 tokenów.
+
+Panel (adapter Slayera, raw continuation, 0-shot, `--limit 100`, batch 4, `lm_eval 0.4.13`,
+KV cache, 102 s):
+
+| zadanie | acc | acc_norm |
+|---|---|---|
+| `arc_challenge` | 30,0% | 36,0% |
+| `piqa` | 73,0% | 74,0% |
+
+Losowy poziom to 25% (arc) i 50% (piqa), więc arc ledwo ponad przypadek, piqa wyraźnie lepiej.
+Przy 100 dokumentach niepewność to ~±5 pkt, a adapter podaje prompt **bez szablonu ChatML**, więc
+instruct jest tu mierzony jak baza — liczby służą do porównania z bazą 1.09, nie do oceny czatu.
+Uwaga: `gpu-format-tool.json` nie dotarł w archiwum, więc format/tool na GPU nie są zmierzone;
+na CPU jest 3/6 i 3/6.
+
+## Dlaczego 3/6 nie przeczy 92% z karty
+
+Własny zestaw autorów (`training/results/sft_step1605.json`) raportuje: `chat_format_ok` 69,33%
+(300 przypadków), `tool_replay_ok` 92,47% (385), `loop_end_to_end` 62,96% (60),
+`loop_no_tool_correct` 66,67%.
+
+`tool_replay` to **odtworzenie wywołania z wymuszonym prefiksem** `<tool_call>` — mierzy mechanikę
+formatu, nie decyzję. Nasz zestaw mierzy decyzję i ugruntowanie w dowodach na 6 przypadkach:
+2/2 poprawne, gdy model zdecyduje się wywołać (JSON i argumenty w porządku), ale 2/4 decyzji błędne
+(godzina z pamięci, wymyślona dokumentacja) plus 1/2 fałszywe wywołanie przy small talku. Obie
+liczby mogą być prawdziwe: format jest dobry, autonomia zawodzi.
