@@ -78,3 +78,59 @@ Przykłady z `eval/chat_prompts.txt` (int8, T=0,3):
 - Nie ma GGUF/vLLM — serwowanie wyłącznie przez `train_gpt_ref_r24_2.py` albo
   `research/common/slayer_model.py` z `slayerlabs/benchmarks-fabryka-ai`.
 - Na CPU 3–5 tok/s: odpowiedź 250 tokenów to ~1 min. Do czatu interaktywnego potrzebne GPU.
+
+## Benchmark instrukcji (`scripts/bench_instruct.py`)
+
+Sprawdzenia są deterministyczne (parsowanie JSON, regex, liczniki), bez sędziego-LLM. Zestawy
+odtwarzają twierdzenia z karty modelu, żeby zweryfikować je na własnym runtime.
+
+```bash
+python scripts/bench_instruct.py --model-dir models/Slayer1B-1.09-Instruct --only format tool
+python scripts/bench_instruct.py --model-dir models/Slayer1B-1.09-Instruct --only loops --loop-tokens 192
+```
+
+| zestaw | wynik |
+|---|---|
+| format (6 sprawdzeń: sam JSON, jedno zdanie, 3 numerowane pozycje, limit 20 słów, po angielsku, bez powtarzania pytania) | **3/6 = 50%** |
+| tool-call (6 sprawdzeń: 4 wywołania + 2 przypadki „bez narzędzia”) | **3/6 = 50%** |
+| pętle, greedy, 192 tokeny | powtórzenia 0,26, **domknięte 0/3**, 3,1 tok/s |
+| pętle, T=0,3 / top-p 0,9 / kara 1,1 | powtórzenia 0,02, **domknięte 0/3**, 3,2 tok/s |
+
+Dwa przebiegi format+tool dały identyczny wynik (3/6, 3/6) — zestaw jest powtarzalny.
+
+Co się powtarza z karty: **format wywołania** jest poprawny (2/2 razy, gdy model zdecyduje się
+wywołać: `<tool_call>{"name": "calculator", "arguments": {"expression": "17 * 23"}}</tool_call>`),
+a greedy powtarza znacznie więcej niż próbkowanie z karą (0,26 vs 0,02) — stąd zalecenie karty.
+
+Co się nie powtarza / co jest gorsze:
+
+- „sam JSON” → model pisze meta-instrukcję („Niech «kod» będzie tekstem w języku polskim…”), nie JSON;
+- „3 pozycje z numeracją” → jedna linia z `1. **Numeracja**: 1, 2, 3…`;
+- limit 20 słów → przekroczony;
+- G53 = „skrót od «Gotowe do użycia»” — halucynacja;
+- pytanie o narzędzie: „Która godzina w Krakowie?” → odpowiedź z pamięci („**12:00**”) bez wywołania;
+- pytanie o dokumentację G54 → wymyślone „komenda w języku C#… system kontroli wersji Git”;
+- „Napisz krótkie powitanie” → wywołanie `get_time` (karta sama to opisuje jako utratę powściągliwości).
+
+`domknięte 0/3` przy 192 tokenach oznacza, że model **nie emituje** `<|im_end|>` i pisze do
+wyczerpania budżetu; klient czatu musi sam ucinać długość (tak robi `slayer_chat.py`).
+
+## Panel lm-eval i serwer OpenAI-compatible
+
+Paczka ma teraz `load_slayer.py` z sygnaturą `load(path, device)` (`scripts/load_slayer_109.py`),
+bo bazowy loader 1.09 ma `load(device, update)` i pobiera `wagi_<update>.pt` — na naszej paczce
+kończy się to `ValueError: Published updates: 5000 through 45000 in steps of 5000`.
+Po podmianie loader-a `slayer_kv_lm.model_from_package(pkg, "cpu")` ładuje paczkę w 19 s
+(`block=4096`, `vocab=32768`, `head` związany z `tok`), więc otwarte są:
+
+```bash
+# panel 50 zadań (wymaga: pip install lm-eval)
+python slayer_kv_lm.py --pkg models/Slayer1B-1.09-Instruct --tasks arc_challenge
+
+# serwer OpenAI-compatible (127.0.0.1:8001) i pomiar przez API
+python slayer_server.py --pkg models/Slayer1B-1.09-Instruct --port 8001 --log reports/api-log
+```
+
+Uwagi metodologiczne: panel lm-eval jest w większości loglikelihood-owy, więc mierzy wiedzę, a
+nie posłuszeństwo instrukcjom; `generate_until` w adapterze jest greedy i **bez szablonu ChatML**,
+więc wynik instructa będzie zaniżony — do uczciwego porównania trzeba dodać szablon do adaptera.
