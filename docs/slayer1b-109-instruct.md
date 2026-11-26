@@ -137,8 +137,8 @@ więc wynik instructa będzie zaniżony — do uczciwego porównania trzeba doda
 
 ## GPU (Colab T4) i panel lm-eval
 
-Notebook: `slayer1b_gpu_bench.ipynb` w repo (18 komórek) — klon gałęzi, budowa paczki, nasz zestaw,
-panel. Wyniki z przebiegu na T4:
+Notebook: `notebooks/slayer1b_gpu_bench.ipynb` (18 komórek) — klon gałęzi, budowa paczki, nasz
+zestaw, panel. Wyniki z przebiegu na T4:
 
 | pomiar | CPU fp32 | T4 fp32 (Colab) |
 |---|---|---|
