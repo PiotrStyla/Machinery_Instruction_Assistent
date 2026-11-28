@@ -199,3 +199,29 @@ Zmierzone na tym komputerze (CPU fp32, 1,07B):
 Odpowiedzi są płynne i po polsku, ale **rzeczowo błędne**: „G90 to standardowy rozmiar płytki
 drukowanej”, „G53 to G54 z tym samym kodem”. Serwer jest do oglądania zachowania modelu, nie do
 korzystania z niego jako źródła wiedzy o CNC.
+
+## Warstwa odpowiedzi w aplikacji (kracow-lens)
+
+`chat_server.py` wystawia też `/v1/models` i `/v1/chat/completions` (bez streamingu), więc każdy
+klient OpenAI-compatible może gadać z paczką. W `cracow-lens` doszła cienka warstwa:
+`cracow_lens/llm.py` (urllib, zero nowych zależności), `POST /api/answer` (dossier agenta →
+ponumerowane źródła → odpowiedź z cytatami) i `POST /api/check` (model ocenia każde źródło TAK/NIE).
+Wszystko jest nieaktywne, dopóki `CRACOW_LENS_LLM_BASE_URL` jest puste.
+
+Pomiar end-to-end na realnym dossier („chodniki w podgórzu”, 67 tys. dokumentów w indeksie):
+
+| co | wynik |
+|---|---|
+| wyszukiwanie (dossier agenta) | 0,33–0,35 s |
+| prompt do modelu | 1 950 znaków, 4 źródła |
+| generacja 320 tokenów | 115 s (2,77 tok/s) |
+| treść odpowiedzi | **przepisany prompt** (Brief + źródła), `finish_reason=length` |
+| wariant „nie powtarzaj briefu ani źródeł” + marker | przestał odbijać prompt, ale **skopiował warstwę pieniężną** |
+| streszczenie jednego fragmentu | **przepisany fragment** |
+| ocena trafności TAK/NIE | 6/6 TAK w 24 s — ale kontrola negatywna (przedszkola, kserokopiarki, droga bez chodnika) dała **TAK w 4/4** |
+
+Czyli ten checkpoint nie nadaje się ani do pisania odpowiedzi ugruntowanej, ani do oceny trafności:
+format wywołania trzyma, ale każde dłuższe zadanie kończy się kopiowaniem wejścia, a decyzja
+binarna jest stała. W aplikacji zostaje deterministyczne wyszukiwanie; przyciski modelu są ukryte,
+dopóki nie podłączysz endpointu, a `usable: false` w `/api/answer` odcina odpowiedzi, które kopiują
+źródła. Podmiana na mocniejszy model OpenAI-compatible nie wymaga zmian w kodzie aplikacji.

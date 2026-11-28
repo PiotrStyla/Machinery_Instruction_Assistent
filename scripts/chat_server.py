@@ -86,6 +86,34 @@ q.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.me
 """
 
 
+def openai_messages(payload: dict) -> tuple[str, str]:
+    """OpenAI chat messages -> jeden system i jedna treść użytkownika."""
+    messages = payload.get("messages") or []
+    if not isinstance(messages, list) or not messages:
+        raise ValueError("messages: oczekiwana niepusta lista")
+    system_parts, turns = [], []
+    for message in messages:
+        role = message.get("role")
+        content = message.get("content")
+        if isinstance(content, list):  # OpenAI text parts
+            content = "".join(str(part.get("text") or "") for part in content
+                              if isinstance(part, dict) and part.get("type") == "text")
+        if not isinstance(content, str):
+            raise ValueError(f"content roli {role!r} nie jest tekstem")
+        if role == "system":
+            system_parts.append(content)
+        elif role in ("user", "assistant"):
+            turns.append((role, content))
+        else:
+            raise ValueError(f"rola {role!r} nieobsługiwana")
+    if not turns:
+        raise ValueError("brak tury użytkownika")
+    user = turns[-1][1]
+    if len(turns) > 1:
+        user = "\n\n".join(f"{'Użytkownik' if r == 'user' else 'Asystent'}: {t}" for r, t in turns)
+    return "\n\n".join(system_parts), user
+
+
 class Chat:
     def __init__(self, model_dir: str, dtype: str, device: str, quantization: str):
         started = time.perf_counter()
@@ -97,6 +125,7 @@ class Chat:
 
         self.tokenizer = Tokenizer.from_file(str(Path(model_dir) / "tokenizer.json"))
         self.model_dir = model_dir
+        self.model_name = Path(model_dir).name
         self.dtype = "int8" if quantization == "int8" else dtype
         self.device = str(next(self.model.parameters()).device)
         self.params = sum(p.numel() for p in self.model.parameters())
@@ -113,6 +142,7 @@ class Chat:
     def health(self) -> dict:
         return {
             "model_dir": self.model_dir,
+            "model": Path(self.model_dir).name,
             "device": self.device,
             "dtype": self.dtype,
             "model_params": f"{self.params / 1e9:.2f}B",
@@ -120,11 +150,11 @@ class Chat:
             "warmup_seconds": self.warmup_seconds,
         }
 
-    def answer(self, prompt: str, max_new_tokens: int, temperature: float) -> dict:
+    def answer(self, system: str, prompt: str, max_new_tokens: int, temperature: float) -> dict:
         with self.lock:
             result = chat_once(
                 self.model, self.tokenizer,
-                "Jesteś zwięzłym asystentem. Odpowiadasz po polsku.",
+                system or "Jesteś zwięzłym asystentem. Odpowiadasz po polsku.",
                 prompt,
                 max_new_tokens=max_new_tokens,
                 temperature=temperature,
@@ -156,6 +186,11 @@ def make_handler(chat: Chat):
         def do_GET(self) -> None:  # noqa: N802
             if self.path.rstrip("/") in ("", "/index.html"):
                 self._send(200, PAGE.encode("utf-8"), "text/html; charset=utf-8")
+            elif self.path.rstrip("/") == "/v1/models":
+                body = {"object": "list", "data": [
+                    {"id": chat.model_name, "object": "model", "owned_by": "slayerlab"}]}
+                self._send(200, json.dumps(body, ensure_ascii=False).encode("utf-8"),
+                           "application/json; charset=utf-8")
             elif self.path.rstrip("/") == "/api/health":
                 self._send(200, json.dumps(chat.health(), ensure_ascii=False).encode("utf-8"),
                            "application/json; charset=utf-8")
@@ -163,6 +198,9 @@ def make_handler(chat: Chat):
                 self._send(404, b'{"error": "not found"}', "application/json")
 
         def do_POST(self) -> None:  # noqa: N802
+            if self.path.rstrip("/") == "/v1/chat/completions":
+                self._openai()
+                return
             if self.path.rstrip("/") != "/api/chat":
                 self._send(404, b'{"error": "not found"}', "application/json")
                 return
@@ -186,6 +224,50 @@ def make_handler(chat: Chat):
                         "seconds": round(time.perf_counter() - started, 2),
                         "generated_tokens": 0, "tokens_per_second": 0.0,
                         "prompt_tokens": 0, "stopped_on_eot": False}
+            self._send(200, json.dumps(body, ensure_ascii=False).encode("utf-8"),
+                       "application/json; charset=utf-8")
+
+        def _openai(self) -> None:
+            """Minimal /v1/chat/completions: bez streamingu, bez narzędzi."""
+            try:
+                length = int(self.headers.get("Content-Length") or 0)
+                payload = json.loads(self.rfile.read(length) or b"{}")
+                if payload.get("stream"):
+                    raise ValueError("stream=true nieobsługiwane; ustaw stream=false")
+                system, user = openai_messages(payload)
+                max_new_tokens = max(8, min(int(payload.get("max_tokens") or 256), 512))
+                temperature = max(0.0, min(float(payload.get("temperature") if payload.get("temperature") is not None else 0.3), 1.5))
+            except (ValueError, TypeError, json.JSONDecodeError) as exc:
+                body = {"error": {"message": f"zły request: {exc}", "type": "invalid_request_error"}}
+                self._send(400, json.dumps(body, ensure_ascii=False).encode("utf-8"),
+                           "application/json; charset=utf-8")
+                return
+            started = time.perf_counter()
+            try:
+                result = chat.answer(system, user, max_new_tokens, temperature)
+            except Exception as exc:  # generacja: błąd jako 500, serwer zostaje
+                body = {"error": {"message": f"generacja nieudana: {exc!r}", "type": "server_error"}}
+                self._send(500, json.dumps(body, ensure_ascii=False).encode("utf-8"),
+                           "application/json; charset=utf-8")
+                return
+            body = {
+                "id": f"chatcmpl-{int(time.time() * 1000)}",
+                "object": "chat.completion",
+                "created": int(time.time()),
+                "model": chat.model_name,
+                "choices": [{
+                    "index": 0,
+                    "message": {"role": "assistant", "content": result["answer"]},
+                    "finish_reason": "stop" if result["stopped_on_eot"] else "length",
+                }],
+                "usage": {
+                    "prompt_tokens": result["prompt_tokens"],
+                    "completion_tokens": result["generated_tokens"],
+                    "total_tokens": result["prompt_tokens"] + result["generated_tokens"],
+                },
+                "x_slayer": {"seconds": result["seconds"],
+                             "tokens_per_second": result["tokens_per_second"]},
+            }
             self._send(200, json.dumps(body, ensure_ascii=False).encode("utf-8"),
                        "application/json; charset=utf-8")
 
