@@ -176,3 +176,26 @@ formatu, nie decyzję. Nasz zestaw mierzy decyzję i ugruntowanie w dowodach na 
 2/2 poprawne, gdy model zdecyduje się wywołać (JSON i argumenty w porządku), ale 2/4 decyzji błędne
 (godzina z pamięci, wymyślona dokumentacja) plus 1/2 fałszywe wywołanie przy small talku. Obie
 liczby mogą być prawdziwe: format jest dobry, autonomia zawodzi.
+
+## Lokalny czat (`scripts/chat_server.py`)
+
+```bash
+python scripts/chat_server.py --model-dir models/Slayer1B-1.09-Instruct --port 8791
+# http://127.0.0.1:8791/  — jedno pokolenie naraz, ChatML, /api/chat i /api/health
+```
+
+Parametry: `--quantization int8` (≈1,3× szybciej, ale parity ~1,0 — patrz wyżej), `--port`,
+`--device auto`, `--dtype float32`. Serwer nasłuchuje tylko na `127.0.0.1`.
+
+Zmierzone na tym komputerze (CPU fp32, 1,07B):
+
+| co | wynik |
+|---|---|
+| ładowanie modelu (ciepły cache) | 6,3 s |
+| warmup przy starcie | 3,2 s |
+| pierwsze zapytanie po warmupie | 13,1 s → 45 tokenów, **3,4 tok/s**, tura domknięta |
+| bez warmupu pierwsze pokolenie | 46 s na 48 tokenów (inicjalizacja puli wątków) |
+
+Odpowiedzi są płynne i po polsku, ale **rzeczowo błędne**: „G90 to standardowy rozmiar płytki
+drukowanej”, „G53 to G54 z tym samym kodem”. Serwer jest do oglądania zachowania modelu, nie do
+korzystania z niego jako źródła wiedzy o CNC.
